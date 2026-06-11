@@ -1,0 +1,211 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <meta name="theme-color" content="#0f0f1a">
+  <title>stub1t</title>
+  <link rel="icon" href="data:image/svg+xml,<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'><text y='.9em' font-size='90'>💪</text></svg>">
+
+  <style>
+    :root {
+      --bg: #0f0f1a;
+      --card: #1a1a2e;
+      --card2: #16213e;
+      --primary: #e94560;
+      --text: #eaeaea;
+      --muted: #8888aa;
+      --border: #2a2a4a;
+      --success: #2ecc71;
+      --radius: 14px;
+      /* heatmap intensity scale */
+      --cell0: #1a1a2e;
+      --cell1: #4a2335;
+      --cell2: #8c2e45;
+      --cell3: #c73652;
+      --cell4: #e94560;
+    }
+
+    * { box-sizing: border-box; margin: 0; padding: 0; }
+
+    body {
+      background: var(--bg);
+      color: var(--text);
+      font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', sans-serif;
+      min-height: 100dvh;
+      display: flex;
+      justify-content: center;
+      padding: 48px 16px;
+    }
+
+    main { width: 100%; max-width: 640px; }
+
+    header { margin-bottom: 32px; }
+    header h1 { font-size: 32px; font-weight: 800; }
+    header p { color: var(--muted); margin-top: 4px; font-size: 15px; }
+
+    .section-title {
+      font-size: 12px; font-weight: 700; color: var(--muted);
+      text-transform: uppercase; letter-spacing: 1px;
+      margin: 28px 0 12px;
+    }
+
+    .stats-row {
+      display: grid;
+      grid-template-columns: repeat(auto-fit, minmax(140px, 1fr));
+      gap: 10px;
+    }
+    .stat {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 16px;
+    }
+    .stat .v { font-size: 30px; font-weight: 800; }
+    .stat .v small { font-size: 15px; color: var(--muted); font-weight: 600; }
+    .stat .l { font-size: 11px; color: var(--muted); font-weight: 600;
+      text-transform: uppercase; letter-spacing: .6px; margin-top: 2px; }
+    .stat.streak .v { color: var(--primary); }
+
+    .card {
+      background: var(--card);
+      border-radius: var(--radius);
+      padding: 18px;
+    }
+
+    /* ── Activity heatmap ── */
+    #heatmap-scroll { overflow-x: auto; }
+    #heatmap {
+      display: grid;
+      grid-auto-flow: column;
+      grid-template-rows: repeat(7, 12px);
+      grid-auto-columns: 12px;
+      gap: 3px;
+      width: max-content;
+    }
+    .hm-cell { border-radius: 3px; background: var(--cell0); }
+    .hm-cell.l1 { background: var(--cell1); }
+    .hm-cell.l2 { background: var(--cell2); }
+    .hm-cell.l3 { background: var(--cell3); }
+    .hm-cell.l4 { background: var(--cell4); }
+
+    .hm-legend {
+      display: flex; align-items: center; gap: 4px;
+      justify-content: flex-end; margin-top: 10px;
+      font-size: 11px; color: var(--muted);
+    }
+    .hm-legend .hm-cell { width: 12px; height: 12px; }
+
+    .updated { color: var(--muted); font-size: 12px; margin-top: 10px; }
+
+    footer {
+      margin-top: 40px; padding-top: 16px;
+      border-top: 1px solid var(--border);
+      color: var(--muted); font-size: 13px;
+    }
+    footer a { color: var(--primary); text-decoration: none; }
+
+    .empty { color: var(--muted); font-size: 14px; }
+  </style>
+</head>
+<body>
+
+<main>
+  <header>
+    <h1>stub1t</h1>
+    <p>Code, pushups, and other repeated motions.</p>
+  </header>
+
+  <div class="section-title">💪 Pushups</div>
+
+  <div class="stats-row" id="stats">
+    <div class="stat streak"><div class="v" id="st-streak">–</div><div class="l">Day streak</div></div>
+    <div class="stat"><div class="v" id="st-best-streak">–</div><div class="l">Best streak</div></div>
+    <div class="stat"><div class="v" id="st-total">–</div><div class="l">Total pushups</div></div>
+    <div class="stat"><div class="v" id="st-workouts">–</div><div class="l">Workouts</div></div>
+    <div class="stat"><div class="v" id="st-best">–</div><div class="l">Best session</div></div>
+    <div class="stat"><div class="v" id="st-level">–</div><div class="l">Current level</div></div>
+  </div>
+
+  <div class="section-title">Activity</div>
+  <div class="card">
+    <div id="heatmap-scroll"><div id="heatmap"></div></div>
+    <div class="hm-legend">
+      Less
+      <div class="hm-cell"></div><div class="hm-cell l1"></div><div class="hm-cell l2"></div>
+      <div class="hm-cell l3"></div><div class="hm-cell l4"></div>
+      More
+    </div>
+    <div class="updated" id="updated"></div>
+  </div>
+
+  <footer>
+    Tracked with <a href="https://github.com/stub1t/OpenPushups">OpenPushups</a> — a free,
+    open-source, offline pushup coach.
+  </footer>
+</main>
+
+<script>
+const WEEKS = 26;
+
+function intensity(total) {
+  if (!total) return '';
+  if (total < 30)  return 'l1';
+  if (total < 60)  return 'l2';
+  if (total < 100) return 'l3';
+  return 'l4';
+}
+
+function dateKey(d) {
+  return d.toISOString().slice(0, 10);
+}
+
+function renderHeatmap(days) {
+  // Last WEEKS full columns, Monday-first, ending on today's column.
+  const today = new Date();
+  today.setHours(12, 0, 0, 0);                    // noon avoids DST edge cases
+  const dow = (today.getDay() + 6) % 7;           // 0 = Monday
+  const start = new Date(today);
+  start.setDate(start.getDate() - dow - (WEEKS - 1) * 7);
+
+  const cells = [];
+  for (const d = new Date(start); d <= today; d.setDate(d.getDate() + 1)) {
+    const key = dateKey(d);
+    const total = days[key] || 0;
+    const title = `${key} — ${total} pushups`;
+    cells.push(`<div class="hm-cell ${intensity(total)}" title="${title}"></div>`);
+  }
+  document.getElementById('heatmap').innerHTML = cells.join('');
+  document.getElementById('heatmap-scroll').scrollLeft = 9999;
+}
+
+async function load() {
+  let s;
+  try {
+    const res = await fetch('pushups/stats.json', { cache: 'no-store' });
+    if (!res.ok) throw new Error(res.status);
+    s = await res.json();
+  } catch (e) {
+    document.getElementById('stats').innerHTML = '<div class="empty">No stats published yet.</div>';
+    return;
+  }
+
+  document.getElementById('st-streak').textContent      = s.currentStreak ?? 0;
+  document.getElementById('st-best-streak').textContent = s.bestStreak ?? 0;
+  document.getElementById('st-total').textContent       = (s.totalPushups ?? 0).toLocaleString('en');
+  document.getElementById('st-workouts').textContent    = s.totalWorkouts ?? 0;
+  document.getElementById('st-best').textContent        = s.bestWorkout ?? 0;
+  document.getElementById('st-level').innerHTML         = `${s.level ?? 1}<small> / 6</small>`;
+
+  renderHeatmap(s.days || {});
+
+  if (s.updated) {
+    document.getElementById('updated').textContent =
+      `Last workout data published ${new Date(s.updated).toLocaleDateString('en')}`;
+  }
+}
+
+load();
+</script>
+
+</body>
+</html>
