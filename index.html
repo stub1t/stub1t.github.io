@@ -123,7 +123,6 @@
     <div class="stat"><div class="v" id="st-total">–</div><div class="l">Total pushups</div></div>
     <div class="stat"><div class="v" id="st-workouts">–</div><div class="l">Workouts</div></div>
     <div class="stat"><div class="v" id="st-best">–</div><div class="l">Best session</div></div>
-    <div class="stat"><div class="v" id="st-level">–</div><div class="l">Current level</div></div>
   </div>
 
   <div class="section-title">Activity</div>
@@ -194,7 +193,6 @@ async function load() {
   document.getElementById('st-total').textContent       = (s.totalPushups ?? 0).toLocaleString('en');
   document.getElementById('st-workouts').textContent    = s.totalWorkouts ?? 0;
   document.getElementById('st-best').textContent        = s.bestWorkout ?? 0;
-  document.getElementById('st-level').innerHTML         = `${s.level ?? 1}<small> / 6</small>`;
 
   renderHeatmap(s.days || {});
 
